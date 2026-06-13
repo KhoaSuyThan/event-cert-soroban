@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EventCert Stellar</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo">
+            <span class="logo-icon">★</span>
+            <span>EventCert Stellar</span>
+        </div>
+
+        <nav>
+            <a href="#home">Home</a>
+            <a href="#verify">Verify</a>
+            <a href="#admin">Admin</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- HOME -->
+        <section id="home" class="hero">
+            <div class="hero-content">
+                <p class="badge">Powered by Stellar Soroban</p>
+
+                <h1>Digital Event Certificates on Blockchain</h1>
+
+                <p class="hero-text">
+                    Issue, verify, and revoke event participation certificates
+                    using a transparent smart contract on Stellar.
+                </p>
+
+                <div class="hero-actions">
+                    <a href="#verify" class="btn primary">Verify Certificate</a>
+                    <a href="#admin" class="btn secondary">Admin Dashboard</a>
+                </div>
+            </div>
+
+            <div class="hero-card">
+                <div class="certificate-card">
+                    <div class="cert-header">
+                        <span>EVENT CERTIFICATE</span>
+                        <span class="status">VALID</span>
+                    </div>
+
+                    <h2>Blockchain Workshop</h2>
+
+                    <p>This certifies that</p>
+                    <h3>Nguyen Van A</h3>
+
+                    <p>has participated in the event organized by</p>
+                    <strong>HUTECH IT Club</strong>
+
+                    <div class="cert-footer">
+                        <span>ID: CERT001</span>
+                        <span>13/06/2026</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FEATURES -->
+        <section class="features">
+            <div class="feature-card">
+                <div class="feature-icon">📝</div>
+                <h3>Issue Certificate</h3>
+                <p>Admin can create digital certificates for event participants.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>Verify Authenticity</h3>
+                <p>Anyone can verify certificate validity by certificate ID.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3>Revoke Certificate</h3>
+                <p>Admin can revoke certificates if they are invalid or incorrect.</p>
+            </div>
+        </section>
+
+        <!-- VERIFY -->
+        <section id="verify" class="section">
+            <div class="section-header">
+                <p class="badge">Public Verification</p>
+                <h2>Verify Certificate</h2>
+                <p>Enter a certificate ID to check whether it is valid on-chain.</p>
+            </div>
+
+            <div class="panel">
+                <div class="form-group">
+                    <label>Certificate ID</label>
+                    <input type="text" id="verifyCertId" placeholder="Example: CERT001" />
+                </div>
+
+                <button class="btn primary full" onclick="verifyCertificate()">
+                    Verify Certificate
+                </button>
+
+                <div id="verifyResult" class="result hidden"></div>
+            </div>
+        </section>
+
+        <!-- ADMIN -->
+        <section id="admin" class="section">
+            <div class="section-header">
+                <p class="badge">Admin Dashboard</p>
+                <h2>Issue New Certificate</h2>
+                <p>Create a digital certificate for an event participant.</p>
+            </div>
+
+            <div class="admin-grid">
+                <div class="panel">
+                    <h3>Issue Certificate</h3>
+
+                    <div class="form-group">
+                        <label>Certificate ID</label>
+                        <input type="text" id="certId" placeholder="CERT001" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Student Wallet Address</label>
+                        <input type="text" id="studentWallet" placeholder="Stellar wallet address" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Student Name</label>
+                        <input type="text" id="studentName" placeholder="Nguyen Van A" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Event Name</label>
+                        <input type="text" id="eventName" placeholder="Blockchain Workshop" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Organizer</label>
+                        <input type="text" id="organizer" placeholder="HUTECH IT Club" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Issue Date</label>
+                        <input type="date" id="issueDate" />
+                    </div>
+
+                    <button class="btn primary full" onclick="issueCertificate()">
+                        Issue Certificate
+                    </button>
+
+                    <div id="issueResult" class="result hidden"></div>
+                </div>
+
+                <div class="panel danger-panel">
+                    <h3>Revoke Certificate</h3>
+
+                    <p class="small-text">
+                        Use this function when a certificate was issued incorrectly
+                        or needs to be marked as invalid.
+                    </p>
+
+                    <div class="form-group">
+                        <label>Certificate ID</label>
+                        <input type="text" id="revokeCertId" placeholder="CERT001" />
+                    </div>
+
+                    <button class="btn danger full" onclick="revokeCertificate()">
+                        Revoke Certificate
+                    </button>
+
+                    <div id="revokeResult" class="result hidden"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>EventCert Stellar · Built with Soroban Smart Contract</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

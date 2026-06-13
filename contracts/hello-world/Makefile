@@ -1,16 +1,8 @@
-default: build
-
-all: test
-
-test: build
-	cargo test
-
 build:
-	stellar contract build
-	@ls -l target/wasm32v1-none/release/*.wasm
+	cargo build --target wasm32-unknown-unknown --release
 
-fmt:
-	cargo fmt --all
+test:
+	cargo test
 
 clean:
 	cargo clean
