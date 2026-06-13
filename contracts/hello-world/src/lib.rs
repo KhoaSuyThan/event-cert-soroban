@@ -1,125 +1,148 @@
-#![cfg(test)]
+#![no_std]
 
-use super::*;
 use soroban_sdk::{
-    symbol_short,
-    testutils::Address as _,
-    Address, Env, String,
+    contract, contracterror, contractimpl, contracttype, Address, Env, String, Symbol,
 };
 
-#[test]
-fn test_initialize() {
-    let env = Env::default();
-
-    let contract_id = env.register(EventCertContract, ());
-    let client = EventCertContractClient::new(&env, &contract_id);
-
-    let admin = Address::generate(&env);
-
-    env.mock_all_auths();
-
-    client.initialize(&admin);
-
-    let saved_admin = client.get_admin();
-
-    assert_eq!(saved_admin, admin);
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Certificate {
+    pub cert_id: Symbol,
+    pub student: Address,
+    pub student_name: String,
+    pub event_name: String,
+    pub organizer: String,
+    pub issue_date: String,
+    pub valid: bool,
 }
 
-#[test]
-fn test_issue_and_get_certificate() {
-    let env = Env::default();
-
-    let contract_id = env.register(EventCertContract, ());
-    let client = EventCertContractClient::new(&env, &contract_id);
-
-    let admin = Address::generate(&env);
-    let student = Address::generate(&env);
-
-    env.mock_all_auths();
-
-    client.initialize(&admin);
-
-    let cert_id = symbol_short!("CERT001");
-
-    client.issue_certificate(
-        &admin,
-        &cert_id,
-        &student,
-        &String::from_str(&env, "Nguyen Van A"),
-        &String::from_str(&env, "Blockchain Workshop"),
-        &String::from_str(&env, "HUTECH IT Club"),
-        &String::from_str(&env, "13/06/2026"),
-    );
-
-    let certificate = client.get_certificate(&cert_id);
-
-    assert_eq!(certificate.cert_id, cert_id);
-    assert_eq!(certificate.student, student);
-    assert_eq!(certificate.student_name, String::from_str(&env, "Nguyen Van A"));
-    assert_eq!(certificate.event_name, String::from_str(&env, "Blockchain Workshop"));
-    assert_eq!(certificate.valid, true);
+#[contracttype]
+#[derive(Clone)]
+pub enum DataKey {
+    Admin,
+    Certificate(Symbol),
 }
 
-#[test]
-fn test_verify_certificate() {
-    let env = Env::default();
-
-    let contract_id = env.register(EventCertContract, ());
-    let client = EventCertContractClient::new(&env, &contract_id);
-
-    let admin = Address::generate(&env);
-    let student = Address::generate(&env);
-
-    env.mock_all_auths();
-
-    client.initialize(&admin);
-
-    let cert_id = symbol_short!("CERT002");
-
-    client.issue_certificate(
-        &admin,
-        &cert_id,
-        &student,
-        &String::from_str(&env, "Tran Thi B"),
-        &String::from_str(&env, "AI Seminar"),
-        &String::from_str(&env, "HUTECH"),
-        &String::from_str(&env, "14/06/2026"),
-    );
-
-    let is_valid = client.verify_certificate(&cert_id);
-
-    assert_eq!(is_valid, true);
+#[contracterror]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(u32)]
+pub enum CertError {
+    AlreadyInitialized = 1,
+    NotInitialized = 2,
+    CertificateAlreadyExists = 3,
+    CertificateNotFound = 4,
+    NotAdmin = 5,
 }
 
-#[test]
-fn test_revoke_certificate() {
-    let env = Env::default();
+#[contract]
+pub struct EventCertContract;
 
-    let contract_id = env.register(EventCertContract, ());
-    let client = EventCertContractClient::new(&env, &contract_id);
+#[contractimpl]
+impl EventCertContract {
+    pub fn initialize(env: Env, admin: Address) -> Result<(), CertError> {
+        if env.storage().instance().has(&DataKey::Admin) {
+            return Err(CertError::AlreadyInitialized);
+        }
 
-    let admin = Address::generate(&env);
-    let student = Address::generate(&env);
+        admin.require_auth();
 
-    env.mock_all_auths();
+        env.storage().instance().set(&DataKey::Admin, &admin);
 
-    client.initialize(&admin);
+        Ok(())
+    }
 
-    let cert_id = symbol_short!("CERT003");
+    pub fn get_admin(env: Env) -> Result<Address, CertError> {
+        env.storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(CertError::NotInitialized)
+    }
 
-    client.issue_certificate(
-        &admin,
-        &cert_id,
-        &student,
-        &String::from_str(&env, "Le Van C"),
-        &String::from_str(&env, "Web3 Event"),
-        &String::from_str(&env, "Blockchain Club"),
-        &String::from_str(&env, "15/06/2026"),
-    );
+    pub fn issue_certificate(
+        env: Env,
+        admin: Address,
+        cert_id: Symbol,
+        student: Address,
+        student_name: String,
+        event_name: String,
+        organizer: String,
+        issue_date: String,
+    ) -> Result<(), CertError> {
+        Self::check_admin(&env, &admin)?;
 
-    client.revoke_certificate(&admin, &cert_id);
+        let key = DataKey::Certificate(cert_id.clone());
 
-    let is_valid = client.verify_certificate(&cert_id);
+        if env.storage().persistent().has(&key) {
+            return Err(CertError::CertificateAlreadyExists);
+        }
 
-    assert_eq!(is_valid, false);
+        let certificate = Certificate {
+            cert_id,
+            student,
+            student_name,
+            event_name,
+            organizer,
+            issue_date,
+            valid: true,
+        };
+
+        env.storage().persistent().set(&key, &certificate);
+
+        Ok(())
+    }
+
+    pub fn get_certificate(env: Env, cert_id: Symbol) -> Result<Certificate, CertError> {
+        let key = DataKey::Certificate(cert_id);
+
+        env.storage()
+            .persistent()
+            .get(&key)
+            .ok_or(CertError::CertificateNotFound)
+    }
+
+    pub fn verify_certificate(env: Env, cert_id: Symbol) -> Result<bool, CertError> {
+        let certificate = Self::get_certificate(env, cert_id)?;
+
+        Ok(certificate.valid)
+    }
+
+    pub fn revoke_certificate(
+        env: Env,
+        admin: Address,
+        cert_id: Symbol,
+    ) -> Result<(), CertError> {
+        Self::check_admin(&env, &admin)?;
+
+        let key = DataKey::Certificate(cert_id);
+
+        let mut certificate: Certificate = env
+            .storage()
+            .persistent()
+            .get(&key)
+            .ok_or(CertError::CertificateNotFound)?;
+
+        certificate.valid = false;
+
+        env.storage().persistent().set(&key, &certificate);
+
+        Ok(())
+    }
+
+    fn check_admin(env: &Env, admin: &Address) -> Result<(), CertError> {
+        admin.require_auth();
+
+        let saved_admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(CertError::NotInitialized)?;
+
+        if saved_admin != *admin {
+            return Err(CertError::NotAdmin);
+        }
+
+        Ok(())
+    }
 }
+
+mod test;
