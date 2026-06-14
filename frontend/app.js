@@ -50,6 +50,61 @@ function showResult(elementId, html, type = "success") {
     element.innerHTML = html;
 }
 
+function formatDateToVietnamese(dateStr) {
+    if (!dateStr) return "";
+    let parts = dateStr.includes('-') ? dateStr.split('-') : dateStr.split('/');
+    if (parts.length === 3) {
+        if (dateStr.includes('-')) {
+            return `${parts[2]} tháng ${parts[1]} năm ${parts[0]}`; // yyyy-mm-dd
+        } else {
+            return `${parts[0]} tháng ${parts[1]} năm ${parts[2]}`; // dd/mm/yyyy
+        }
+    }
+    return dateStr;
+}
+
+function generateCertificateHTML(cert) {
+    const formattedDate = formatDateToVietnamese(cert.issueDate);
+    // Use the wallet address or a part of it as MSSV for mockup purposes
+    const mssv = cert.studentWallet.length > 10 ? cert.studentWallet.substring(0, 10) : cert.studentWallet;
+    
+    return `
+    <div style="display: flex; justify-content: center; margin-top: 20px; padding-bottom: 20px;">
+        <div class="cert-frame notranslate" translate="no" style="zoom: 0.85; -moz-transform: scale(0.85); -moz-transform-origin: top center;">
+            <div class="cert-border-outer">
+                <div class="cert-border-inner">
+                    <div class="cert-bg-pattern"></div>
+                    
+                    <div class="cert-logo-placeholder">
+                        <img src="logo.png" alt="HUTECH Logo" style="height: 60px; object-fit: contain;">
+                    </div>
+
+                    <div class="real-dept">KHOA CÔNG NGHỆ THÔNG TIN</div>
+                    <div class="real-trao">Trao</div>
+                    <div class="real-title">Giấy chứng nhận</div>
+                    <div class="real-name">${cert.studentName}</div>
+                    <div class="real-mssv">MSSV: ${mssv}</div>
+                    <div class="real-reason">Đã tham gia chương trình</div>
+                    <div class="real-event">${cert.eventName}</div>
+
+                    <div class="real-footer">
+                        <div class="real-cert-id">Số: ${cert.certId}</div>
+                        <div class="real-signature">
+                            <div class="real-date">TP. Hồ Chí Minh, ngày ${formattedDate}</div>
+                            <div class="real-role">P. TRƯỞNG KHOA</div>
+                            <div class="signature-line">
+                                <span style="font-family: 'Brush Script MT', cursive; font-size: 36px; color: #000080; opacity: 0.8; line-height: 0.5;">Duong Thanh Phet</span>
+                            </div>
+                            <div class="real-signer">Th.S Dương Thành Phết</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    `;
+}
+
 async function verifyCertificate() {
     const certId = document.getElementById("verifyCertId").value.trim();
     
@@ -96,14 +151,10 @@ async function verifyCertificate() {
     showResult(
         "verifyResult",
         `
-        <strong>Certificate Valid</strong>
-        <p><strong>Certificate ID:</strong> ${certificate.certId}</p>
-        <p><strong>Student:</strong> ${certificate.studentName}</p>
-        <p><strong>Student Wallet:</strong> ${certificate.studentWallet}</p>
-        <p><strong>Event:</strong> ${certificate.eventName}</p>
-        <p><strong>Organizer:</strong> ${certificate.organizer}</p>
-        <p><strong>Issue Date:</strong> ${certificate.issueDate}</p>
-        <p><strong>Status:</strong> Valid</p>
+        <div style="text-align: center; color: #4ade80; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span class="pulse"></span> CHỨNG NHẬN HỢP LỆ TRÊN BLOCKCHAIN
+        </div>
+        ${generateCertificateHTML(certificate)}
         `,
         "success"
     );
