@@ -1,0 +1,1 @@
+C:\Users\aaa\Pictures\SaveCode\event-cert-soroban\target\wasm32-unknown-unknown\release\event_cert.wasm: C:\Users\aaa\Pictures\SaveCode\event-cert-soroban\contracts\hello-world\src\lib.rs C:\Users\aaa\Pictures\SaveCode\event-cert-soroban\contracts\hello-world\src\test.rs

@@ -10,28 +10,63 @@ const certificates = {
     },
 };
 
+function showToast(title, message, type = "success") {
+    const container = document.getElementById("toastContainer");
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+    
+    toast.innerHTML = `
+        <div class="toast-title">${title}</div>
+        <div class="toast-msg">${message}</div>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add("show");
+    }, 10);
+    
+    setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 400);
+    }, 4000);
+}
+
+function setLoading(buttonId, isLoading) {
+    const btn = document.getElementById(buttonId);
+    if (!btn) return;
+    if (isLoading) {
+        btn.classList.add("loading");
+        btn.disabled = true;
+    } else {
+        btn.classList.remove("loading");
+        btn.disabled = false;
+    }
+}
+
 function showResult(elementId, html, type = "success") {
     const element = document.getElementById(elementId);
-
     element.className = `result ${type}`;
     element.innerHTML = html;
 }
 
-function verifyCertificate() {
+async function verifyCertificate() {
     const certId = document.getElementById("verifyCertId").value.trim();
-
+    
     if (!certId) {
-        showResult(
-            "verifyResult",
-            "<strong>Error:</strong> Please enter a certificate ID.",
-            "error"
-        );
+        showToast("Error", "Please enter a certificate ID.", "error");
         return;
     }
+
+    setLoading("verifyBtn", true);
+    // Simulate network delay
+    await new Promise(r => setTimeout(r, 1200));
+    setLoading("verifyBtn", false);
 
     const certificate = certificates[certId];
 
     if (!certificate) {
+        showToast("Not Found", `No certificate exists with ID: ${certId}`, "error");
         showResult(
             "verifyResult",
             `
@@ -44,6 +79,7 @@ function verifyCertificate() {
     }
 
     if (!certificate.valid) {
+        showToast("Revoked", `This certificate has been revoked.`, "error");
         showResult(
             "verifyResult",
             `
@@ -56,6 +92,7 @@ function verifyCertificate() {
         return;
     }
 
+    showToast("Verified", `Certificate ${certId} is valid!`, "success");
     showResult(
         "verifyResult",
         `
@@ -72,7 +109,7 @@ function verifyCertificate() {
     );
 }
 
-function issueCertificate() {
+async function issueCertificate() {
     const certId = document.getElementById("certId").value.trim();
     const studentWallet = document.getElementById("studentWallet").value.trim();
     const studentName = document.getElementById("studentName").value.trim();
@@ -81,22 +118,18 @@ function issueCertificate() {
     const issueDate = document.getElementById("issueDate").value;
 
     if (!certId || !studentWallet || !studentName || !eventName || !organizer || !issueDate) {
-        showResult(
-            "issueResult",
-            "<strong>Error:</strong> Please fill in all certificate fields.",
-            "error"
-        );
+        showToast("Error", "Please fill in all certificate fields.", "error");
         return;
     }
 
     if (certificates[certId]) {
-        showResult(
-            "issueResult",
-            `<strong>Error:</strong> Certificate ID ${certId} already exists.`,
-            "error"
-        );
+        showToast("Error", `Certificate ID ${certId} already exists.`, "error");
         return;
     }
+
+    setLoading("issueBtn", true);
+    await new Promise(r => setTimeout(r, 1500));
+    setLoading("issueBtn", false);
 
     certificates[certId] = {
         certId,
@@ -108,6 +141,7 @@ function issueCertificate() {
         valid: true,
     };
 
+    showToast("Success", `Certificate issued successfully.`, "success");
     showResult(
         "issueResult",
         `
@@ -127,31 +161,28 @@ function issueCertificate() {
     document.getElementById("issueDate").value = "";
 }
 
-function revokeCertificate() {
+async function revokeCertificate() {
     const certId = document.getElementById("revokeCertId").value.trim();
 
     if (!certId) {
-        showResult(
-            "revokeResult",
-            "<strong>Error:</strong> Please enter a certificate ID.",
-            "error"
-        );
+        showToast("Error", "Please enter a certificate ID.", "error");
         return;
     }
 
     const certificate = certificates[certId];
 
     if (!certificate) {
-        showResult(
-            "revokeResult",
-            `<strong>Error:</strong> Certificate ID ${certId} was not found.`,
-            "error"
-        );
+        showToast("Error", `Certificate ID ${certId} was not found.`, "error");
         return;
     }
 
+    setLoading("revokeBtn", true);
+    await new Promise(r => setTimeout(r, 1200));
+    setLoading("revokeBtn", false);
+
     certificate.valid = false;
 
+    showToast("Success", `Certificate ${certId} revoked.`, "success");
     showResult(
         "revokeResult",
         `
